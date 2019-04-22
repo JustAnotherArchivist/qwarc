@@ -48,6 +48,7 @@ def main():
 	parser.add_argument('--memorylimit', metavar = 'LIMIT', help = 'pause when less than LIMIT bytes memory is free; disable if 0', default = 0)
 	parser.add_argument('--disklimit', metavar = 'LIMIT', help = 'pause when less than LIMIT bytes disk space is free; disable if 0', default = 0)
 	parser.add_argument('--warcsplit', metavar = 'SIZE', help = 'split WARCs into files of SIZE bytes; disable if 0', default = 0)
+	parser.add_argument('--warcdedupe', action = 'store_true', help = 'enable deduplication of WARC records')
 	parser.add_argument('specfile')
 
 	args = parser.parse_args()
@@ -69,6 +70,7 @@ def main():
 		memoryLimit = args.memorylimit,
 		minFreeDisk = args.disklimit,
 		warcSizeLimit = args.warcsplit,
+		warcDedupe = args.warcdedupe,
 	  )
 	if not os.path.exists(args.database):
 		a.create_db()

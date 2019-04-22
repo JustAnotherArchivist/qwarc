@@ -5,20 +5,14 @@ import time
 import warcio
 
 
-class WARCWriter(warcio.warcwriter.WARCWriter):
-	def _do_write_req_resp(self, req, resp, params): #FIXME: Internal API
-		# Write request before response, like wget and wpull; cf. https://github.com/webrecorder/warcio/issues/20
-		self._write_warc_record(self.out, req)
-		self._write_warc_record(self.out, resp)
-
-
 class WARC:
-	def __init__(self, prefix, maxFileSize):
+	def __init__(self, prefix, maxFileSize, dedupe):
 		'''
 		Initialise the WARC writer
 
 		prefix: str, path prefix for WARCs; a dash, a five-digit number, and ".warc.gz" will be appended.
 		maxFileSize: int, maximum size of an individual WARC. Use 0 to disable splitting.
+		dedupe: bool, whether to enable record deduplication
 		'''
 
 		self._prefix = prefix
@@ -28,6 +22,9 @@ class WARC:
 		self._closed = True
 		self._file = None
 		self._warcWriter = None
+
+		self._dedupe = dedupe
+		self._dedupeMap = {}
 
 		self._cycle()
 
@@ -48,7 +45,7 @@ class WARC:
 			else:
 				break
 		logging.info('Opened {}'.format(filename))
-		self._warcWriter = WARCWriter(self._file, gzip = True)
+		self._warcWriter = warcio.warcwriter.WARCWriter(self._file, gzip = True)
 		self._closed = False
 		self._counter += 1
 
@@ -69,6 +66,7 @@ class WARC:
 			      'WARC-IP-Address': r.remoteAddress[0],
 			    }
 			  )
+			requestRecordID = requestRecord.rec_headers.get_header('WARC-Record-ID')
 			responseRecord = self._warcWriter.create_warc_record(
 			    str(r.url),
 			    'response',
@@ -76,9 +74,33 @@ class WARC:
 			    warc_headers_dict = {
 			      'WARC-Date': requestDate,
 			      'WARC-IP-Address': r.remoteAddress[0],
+			      'WARC-Concurrent-To': requestRecordID,
 			    }
 			  )
-			self._warcWriter.write_request_response_pair(requestRecord, responseRecord)
+			payloadDigest = responseRecord.rec_headers.get_header('WARC-Payload-Digest')
+			assert payloadDigest is not None
+			if self._dedupe and responseRecord.payload_length > 0: # Don't "deduplicate" empty responses
+				if payloadDigest in self._dedupeMap:
+					refersToRecordId, refersToUri, refersToDate = self._dedupeMap[payloadDigest]
+					responseHttpHeaders = responseRecord.http_headers
+					responseRecord = self._warcWriter.create_revisit_record(
+					    str(r.url),
+					    digest = payloadDigest,
+					    refers_to_uri = refersToUri,
+					    refers_to_date = refersToDate,
+					    http_headers = responseHttpHeaders,
+					    warc_headers_dict = {
+					      'WARC-Date': requestDate,
+					      'WARC-IP-Address': r.remoteAddress[0],
+					      'WARC-Concurrent-To': requestRecordID,
+					      'WARC-Refers-To': refersToRecordId,
+					      'WARC-Truncated': 'length',
+					    }
+					  )
+				else:
+					self._dedupeMap[payloadDigest] = (responseRecord.rec_headers.get_header('WARC-Record-ID'), str(r.url), requestDate)
+			self._warcWriter.write_record(requestRecord)
+			self._warcWriter.write_record(responseRecord)
 
 		if self._maxFileSize and self._file.tell() > self._maxFileSize:
 			self._cycle()

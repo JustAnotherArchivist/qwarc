@@ -117,7 +117,7 @@ class Item:
 
 
 class QWARC:
-	def __init__(self, itemClasses, warcBasePath, dbPath, concurrency = 1, memoryLimit = 0, minFreeDisk = 0, warcSizeLimit = 0):
+	def __init__(self, itemClasses, warcBasePath, dbPath, concurrency = 1, memoryLimit = 0, minFreeDisk = 0, warcSizeLimit = 0, warcDedupe = False):
 		'''
 		itemClasses: iterable of Item
 		warcBasePath: str, base name of the WARC files
@@ -136,6 +136,7 @@ class QWARC:
 		self._memoryLimit = memoryLimit
 		self._minFreeDisk = minFreeDisk
 		self._warcSizeLimit = warcSizeLimit
+		self._warcDedupe = warcDedupe
 
 	async def obtain_exclusive_db_lock(self, db):
 		c = db.cursor()
@@ -175,7 +176,7 @@ class QWARC:
 			sessions.append(session)
 			freeSessions.append(session)
 
-		warc = qwarc.warc.WARC(self._warcBasePath, self._warcSizeLimit)
+		warc = qwarc.warc.WARC(self._warcBasePath, self._warcSizeLimit, self._warcDedupe)
 
 		db = sqlite3.connect(self._dbPath, timeout = 1)
 		db.isolation_level = None # Transactions are handled manually below.
