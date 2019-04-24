@@ -278,7 +278,7 @@ class QWARC:
 					logging.info('Gracefully shutting down due to STOP file')
 					break
 				if self._memoryLimit and qwarc.utils.uses_too_much_memory(self._memoryLimit):
-					logging.info('Gracefully shutting down due to memory usage (current = {} > limit = {})'.format(get_rss(), self._memoryLimit))
+					logging.info('Gracefully shutting down due to memory usage (current = {} > limit = {})'.format(qwarc.utils.get_rss(), self._memoryLimit))
 					break
 
 			for sleepTask in sleepTasks:
