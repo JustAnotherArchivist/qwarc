@@ -45,9 +45,9 @@ def main():
 	parser.add_argument('--database', metavar = 'DBFILE', default = './qwarc.db')
 	parser.add_argument('--warc', metavar = 'PREFIX', help = 'prefix for the WARC filenames', default = './qwarc')
 	parser.add_argument('--concurrency', type = int, default = 1)
-	parser.add_argument('--memorylimit', metavar = 'LIMIT', help = 'pause when less than LIMIT bytes memory is free; disable if 0', default = 0)
-	parser.add_argument('--disklimit', metavar = 'LIMIT', help = 'pause when less than LIMIT bytes disk space is free; disable if 0', default = 0)
-	parser.add_argument('--warcsplit', metavar = 'SIZE', help = 'split WARCs into files of SIZE bytes; disable if 0', default = 0)
+	parser.add_argument('--memorylimit', metavar = 'LIMIT', type = int, help = 'pause when less than LIMIT bytes memory is free; disable if 0', default = 0)
+	parser.add_argument('--disklimit', metavar = 'LIMIT', type = int, help = 'pause when less than LIMIT bytes disk space is free; disable if 0', default = 0)
+	parser.add_argument('--warcsplit', metavar = 'SIZE', type = int, help = 'split WARCs into files of SIZE bytes; disable if 0', default = 0)
 	parser.add_argument('--warcdedupe', action = 'store_true', help = 'enable deduplication of WARC records')
 	parser.add_argument('specfile')
 
