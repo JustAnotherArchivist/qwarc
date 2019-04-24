@@ -1,4 +1,5 @@
 from qwarc.const import *
+import aiohttp
 import asyncio
 import os
 
@@ -146,7 +147,7 @@ async def handle_response_default(url, attempt, response, exc):
 		return ACTION_RETRY, True
 	if response.status in (401, 403, 404, 405, 410):
 		return ACTION_IGNORE, True
-	if exc is not None and isinstance(exc, (asyncio.TimeoutError, _aiohttp.ClientError)):
+	if exc is not None and isinstance(exc, (asyncio.TimeoutError, aiohttp.ClientError)):
 		await asyncio.sleep(5)
 		return ACTION_RETRY, True
 	if response.status in (200, 204, 206, 304):
