@@ -228,7 +228,7 @@ class QWARC:
 
 				if self._minFreeDisk and qwarc.utils.too_little_disk_space(self._minFreeDisk):
 					logging.info('Disk space is low, sleeping')
-					sleepTask = asyncio.sleep(random.uniform(self._concurrency / 2, self._concurrency * 1.5))
+					sleepTask = asyncio.ensure_future(asyncio.sleep(random.uniform(self._concurrency / 2, self._concurrency * 1.5)))
 					sleepTask.taskType = 'sleep'
 					tasks.add(sleepTask)
 					sleepTasks.add(sleepTask)
