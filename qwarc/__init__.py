@@ -226,7 +226,7 @@ class QWARC:
 					emptyTodoFullReached = True
 					await wait_for_free_task()
 
-				if self._minFreeDisk and too_little_disk_space(self._minFreeDisk):
+				if self._minFreeDisk and qwarc.utils.too_little_disk_space(self._minFreeDisk):
 					logging.info('Disk space is low, sleeping')
 					sleepTask = asyncio.sleep(random.uniform(self._concurrency / 2, self._concurrency * 1.5))
 					sleepTask.taskType = 'sleep'
@@ -277,7 +277,7 @@ class QWARC:
 				if os.path.exists('STOP'):
 					logging.info('Gracefully shutting down due to STOP file')
 					break
-				if self._memoryLimit and uses_too_much_memory(self._memoryLimit):
+				if self._memoryLimit and qwarc.utils.uses_too_much_memory(self._memoryLimit):
 					logging.info('Gracefully shutting down due to memory usage (current = {} > limit = {})'.format(get_rss(), self._memoryLimit))
 					break
 
