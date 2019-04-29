@@ -30,12 +30,14 @@ class Item:
 
 		self.childItems = []
 
-	async def fetch(self, url, responseHandler = qwarc.utils.handle_response_default):
+	async def fetch(self, url, responseHandler = qwarc.utils.handle_response_default, method = 'GET', data = None):
 		'''
-		HTTP GET a URL
+		HTTP GET or POST a URL
 
 		url: str or yarl.URL
 		responseHandler: a callable that determines how the response is handled. See qwarc.utils.handle_response_default for details.
+		method: str, must be 'GET' or 'POST'
+		data: dict or list/tuple of lists/tuples of length two or bytes or file-like or None, the data to be sent in the request body
 
 		Returns response (a ClientResponse object or None) and history (a tuple of (response, exception) tuples).
 			response can be None and history can be an empty tuple, depending on the circumstances (e.g. timeouts).
@@ -44,6 +46,7 @@ class Item:
 		#TODO: Rewrite using 'async with self.session.get'
 
 		url = yarl.URL(url) # Explicitly convert for normalisation, percent-encoding, etc.
+		assert method in ('GET', 'POST'), 'method must be GET or POST'
 		history = []
 		attempt = 0
 		#TODO redirectLevel
@@ -57,7 +60,7 @@ class Item:
 				try:
 					with _aiohttp.Timeout(60):
 						logging.info('Fetching {}'.format(url))
-						response = await self.session.get(url, headers = self.headers, allow_redirects = False)
+						response = await self.session.request(method, url, data = data, headers = self.headers, allow_redirects = False)
 						try:
 							ret = await response.text(errors = 'surrogateescape')
 						except:
@@ -85,6 +88,9 @@ class Item:
 					if not redirectUrl:
 						return response, tuple(history)
 					url = url.join(yarl.URL(redirectUrl))
+					if response.status in (301, 302, 303) and method == 'POST':
+						method = 'GET'
+						data = None
 					attempt = 0
 				elif action == ACTION_RETRY:
 					# Nothing to do, just go to the next cycle
