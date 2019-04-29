@@ -167,17 +167,17 @@ async def handle_response_ignore_redirects(url, attempt, response, exc):
 	return action, writeToWarc
 
 
-def handle_response_limit_error_retries(maxRetries):
-	'''A response handler that limits the number of retries on errors. It behaves as handle_response_default otherwise.
+def handle_response_limit_error_retries(maxRetries, handler = handle_response_default):
+	'''A response handler that limits the number of retries on errors. It behaves as handler otherwise, which defaults to handle_response_default.
 
 	Technically, this is actually a response handler factory. This is so that the intuitive use works: fetch(..., responseHandler = handle_response_limit_error_retries(5))
 
 	If you use the same limit many times, you should keep the return value (the response handler) of this method and reuse it to avoid creating a new function every time.
 	'''
 
-	async def handler(url, attempt, response, exc):
-		action, writeToWarc = await handle_response_default(url, attempt, response, exc)
+	async def _handler(url, attempt, response, exc):
+		action, writeToWarc = await handler(url, attempt, response, exc)
 		if action == ACTION_RETRY and attempt > maxRetries:
 			action = ACTION_IGNORE
 		return action, writeToWarc
-	return handler
+	return _handler
