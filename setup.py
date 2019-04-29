@@ -3,7 +3,7 @@ import setuptools
 
 setuptools.setup(
 	name = 'qwarc',
-	version = '0.1.2',
+	version = '0.1.3',
 	description = 'A framework for quick web archival',
 	author = 'JustAnotherArchivist',
 	url = 'https://github.com/JustAnotherArchivist/qwarc',
