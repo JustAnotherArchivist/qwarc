@@ -8,12 +8,22 @@ import sys
 import time
 
 
+class Formatter(logging.Formatter):
+	def format(self, record):
+		if not hasattr(record, 'itemString'):
+			if hasattr(record, 'itemType') and hasattr(record, 'itemValue'):
+				record.itemString = f'{record.itemType}:{record.itemValue}'
+			else:
+				record.itemString = 'None'
+		return super().format(record)
+
+
 def setup_logging(logFilename):
 	rootLogger = logging.getLogger()
 	rootLogger.handlers = []
 	rootLogger.setLevel(logging.INFO)
 
-	formatter = logging.Formatter('%(asctime)s.%(msecs)03dZ %(levelname)s %(message)s', datefmt = '%Y-%m-%d %H:%M:%S')
+	formatter = Formatter('%(asctime)s.%(msecs)03dZ %(levelname)s %(itemString)s %(message)s', datefmt = '%Y-%m-%d %H:%M:%S')
 	formatter.converter = time.gmtime
 
 	fileHandler = logging.FileHandler(logFilename)

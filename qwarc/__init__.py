@@ -27,6 +27,7 @@ class Item:
 		self.headers = headers
 		self.warc = warc
 		self.stats = {'tx': 0, 'rx': 0, 'requests': 0}
+		self.logger = logging.LoggerAdapter(logging.getLogger(), {'itemType': self.itemType, 'itemValue': self.itemValue})
 
 		self.childItems = []
 
@@ -62,7 +63,7 @@ class Item:
 			try:
 				try:
 					with _aiohttp.Timeout(60):
-						logging.info(f'Fetching {url}')
+						self.logger.info(f'Fetching {url}')
 						response = await self.session.request(method, url, data = data, headers = headers, allow_redirects = False)
 						try:
 							ret = await response.read()
@@ -73,12 +74,12 @@ class Item:
 						else:
 							tx = len(response.rawRequestData)
 							rx = len(response.rawResponseData)
-							logging.info(f'Fetched {url}: {response.status} (tx {tx}, rx {rx})')
+							self.logger.info(f'Fetched {url}: {response.status} (tx {tx}, rx {rx})')
 							self.stats['tx'] += tx
 							self.stats['rx'] += rx
 							self.stats['requests'] += 1
 				except (asyncio.TimeoutError, _aiohttp.ClientError) as e:
-					logging.error(f'Request for {url} failed: {e!r}')
+					self.logger.error(f'Request for {url} failed: {e!r}')
 					action, writeToWarc = await responseHandler(url, attempt, response, e)
 					exc = e # Pass the exception outward for the history
 				else:
@@ -96,7 +97,7 @@ class Item:
 						data = None
 					attempt = 0
 				elif action == ACTION_RETRIES_EXCEEDED:
-					logging.error(f'Request for {url} failed {attempt} times')
+					self.logger.error(f'Request for {url} failed {attempt} times')
 					return response, tuple(history)
 				elif action == ACTION_RETRY:
 					# Nothing to do, just go to the next cycle
