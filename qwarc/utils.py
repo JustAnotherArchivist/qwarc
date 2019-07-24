@@ -118,7 +118,7 @@ def generate_range_items(start, stop, step):
 	'''
 
 	for i in range(start, stop + 1, step):
-		yield '{}-{}'.format(i, min(i + step - 1, stop))
+		yield f'{i}-{min(i + step - 1, stop)}'
 
 
 async def handle_response_default(url, attempt, response, exc):

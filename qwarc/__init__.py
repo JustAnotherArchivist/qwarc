@@ -62,7 +62,7 @@ class Item:
 			try:
 				try:
 					with _aiohttp.Timeout(60):
-						logging.info('Fetching {}'.format(url))
+						logging.info(f'Fetching {url}')
 						response = await self.session.request(method, url, data = data, headers = headers, allow_redirects = False)
 						try:
 							ret = await response.read()
@@ -73,12 +73,12 @@ class Item:
 						else:
 							tx = len(response.rawRequestData)
 							rx = len(response.rawResponseData)
-							logging.info('Fetched {}: {} (tx {}, rx {})'.format(url, response.status, tx, rx))
+							logging.info(f'Fetched {url}: {response.status} (tx {tx}, rx {rx})')
 							self.stats['tx'] += tx
 							self.stats['rx'] += rx
 							self.stats['requests'] += 1
 				except (asyncio.TimeoutError, _aiohttp.ClientError) as e:
-					logging.error('Request for {} failed: {!r}'.format(url, e))
+					logging.error(f'Request for {url} failed: {e!r}')
 					action, writeToWarc = await responseHandler(url, attempt, response, e)
 					exc = e # Pass the exception outward for the history
 				else:
@@ -163,7 +163,7 @@ class QWARC:
 		try:
 			itemClass = self._itemTypeMap[itemType]
 		except KeyError:
-			raise RuntimeError('No such item type: {!r}'.format(itemType))
+			raise RuntimeError(f'No such item type: {itemType!r}')
 		return itemClass(itemValue, session, headers, warc)
 
 	async def run(self, loop):
@@ -203,7 +203,7 @@ class QWARC:
 						# Got cancelled, nothing we can do about it, but let's log a warning if it's a process task
 						if isinstance(future, asyncio.Task):
 							if future.taskType == 'process_item':
-								logging.warning('Task for {}:{} cancelled: {!r}'.format(future.itemType, future.itemValue, future))
+								logging.warning(f'Task for {future.itemType}:{future.itemValue} cancelled: {future!r}')
 							elif future.taskType == 'sleep':
 								sleepTasks.remove(future)
 						continue
@@ -212,7 +212,7 @@ class QWARC:
 						sleepTasks.remove(future)
 						continue
 					item = future.item
-					logging.info('{itemType}:{itemValue} done: {requests} requests, {tx} tx, {rx} rx'.format(itemType = future.itemType, itemValue = future.itemValue, **item.stats))
+					logging.info(f'{future.itemType}:{future.itemValue} done: {item.stats["requests"]} requests, {item.stats["tx"]} tx, {item.stats["rx"]} rx')
 					cursor = await self.obtain_exclusive_db_lock(db)
 					try:
 						cursor.execute('UPDATE items SET status = ? WHERE id = ?', (STATUS_DONE, future.id))
@@ -287,7 +287,7 @@ class QWARC:
 					logging.info('Gracefully shutting down due to STOP file')
 					break
 				if self._memoryLimit and qwarc.utils.uses_too_much_memory(self._memoryLimit):
-					logging.info('Gracefully shutting down due to memory usage (current = {} > limit = {})'.format(qwarc.utils.get_rss(), self._memoryLimit))
+					logging.info(f'Gracefully shutting down due to memory usage (current = {qwarc.utils.get_rss()} > limit = {self._memoryLimit})')
 					break
 
 			for sleepTask in sleepTasks:

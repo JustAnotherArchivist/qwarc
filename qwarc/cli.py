@@ -28,10 +28,10 @@ def setup_logging(logFilename):
 def check_files(specFilename, logFilename):
 	success = True
 	if not os.path.isfile(specFilename):
-		print('Error: "{}" does not exist or is not a regular file', file = sys.stderr)
+		print(f'Error: "{specFilename}" does not exist or is not a regular file', file = sys.stderr)
 		success = False
 	if os.path.exists(logFilename):
-		print('Error: "{}" already exists'.format(logFilename), file = sys.stderr)
+		print(f'Error: "{logFilename}" already exists', file = sys.stderr)
 		success = False
 	if os.path.exists('STOP'):
 		print('Error: "STOP" exists', file = sys.stderr)

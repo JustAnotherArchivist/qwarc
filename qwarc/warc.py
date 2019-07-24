@@ -34,17 +34,17 @@ class WARC:
 		#TODO: This opens a new file also at the end, which can result in empty WARCs. Should try to reorder this to only open a WARC when writing a record, and to only close the current WARC if the size is exceeded after write_client_response.
 		self.close()
 		while True:
-			filename = '{}-{:05d}.warc.gz'.format(self._prefix, self._counter)
+			filename = f'{self._prefix}-{self._counter:05d}.warc.gz'
 			try:
 				# Try to open the file for writing, requiring that it does not exist yet, and attempt to get an exclusive, non-blocking lock on it
 				self._file = open(filename, 'xb')
 				fcntl.flock(self._file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
 			except FileExistsError:
-				logging.info('{} already exists, skipping'.format(filename))
+				logging.info(f'{filename} already exists, skipping')
 				self._counter += 1
 			else:
 				break
-		logging.info('Opened {}'.format(filename))
+		logging.info(f'Opened {filename}')
 		self._warcWriter = warcio.warcwriter.WARCWriter(self._file, gzip = True)
 		self._closed = False
 		self._counter += 1
