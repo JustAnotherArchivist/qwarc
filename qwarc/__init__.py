@@ -65,7 +65,7 @@ class Item:
 						logging.info('Fetching {}'.format(url))
 						response = await self.session.request(method, url, data = data, headers = headers, allow_redirects = False)
 						try:
-							ret = await response.text(errors = 'surrogateescape')
+							ret = await response.read()
 						except:
 							# No calling the handleResponse callback here because this is really bad. The not-so-bad exceptions (e.g. an error during reading the response) will be caught further down.
 							response.close()
