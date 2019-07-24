@@ -222,7 +222,7 @@ class QWARC:
 								values = [(t, v, STATUS_TODO) for t, v in itertools.islice(it, 100000)]
 								if not values:
 									break
-								cursor.executemany('INSERT INTO items (type, value, status) VALUES (?, ?, ?)', values)
+								cursor.executemany('INSERT OR IGNORE INTO items (type, value, status) VALUES (?, ?, ?)', values)
 						cursor.execute('COMMIT')
 					except:
 						cursor.execute('ROLLBACK')
@@ -316,6 +316,7 @@ class QWARC:
 		with db:
 			db.execute('CREATE TABLE items (id INTEGER PRIMARY KEY, type TEXT, value TEXT, status INTEGER)')
 			db.execute('CREATE INDEX items_status_idx ON items (status)')
+			db.execute('CREATE UNIQUE INDEX items_type_value_idx ON items (type, value)')
 
 		it = itertools.chain(*(i._gen() for i in self._itemClasses))
 		while True:
