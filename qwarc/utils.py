@@ -178,6 +178,6 @@ def handle_response_limit_error_retries(maxRetries, handler = handle_response_de
 	async def _handler(url, attempt, response, exc):
 		action, writeToWarc = await handler(url, attempt, response, exc)
 		if action == ACTION_RETRY and attempt > maxRetries:
-			action = ACTION_IGNORE
+			action = ACTION_RETRIES_EXCEEDED
 		return action, writeToWarc
 	return _handler

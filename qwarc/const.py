@@ -21,3 +21,6 @@ ACTION_RETRY = 2
 ACTION_FOLLOW_OR_SUCCESS = 3
 '''If the response contains a Location or URI header, follow it. Otherwise, treat it as a success.'''
 #TODO: Rename to ACTION_FOLLOW maybe? However, the current name makes it more clear what qwarc does when there's a redirect without a redirect target...
+
+ACTION_RETRIES_EXCEEDED = 4
+'''This request failed repeatedly and exceeded the retry limit.'''

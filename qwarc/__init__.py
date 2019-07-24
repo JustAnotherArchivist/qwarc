@@ -95,6 +95,9 @@ class Item:
 						method = 'GET'
 						data = None
 					attempt = 0
+				elif action == ACTION_RETRIES_EXCEEDED:
+					logging.error(f'Request for {url} failed {attempt} times')
+					return response, tuple(history)
 				elif action == ACTION_RETRY:
 					# Nothing to do, just go to the next cycle
 					pass
