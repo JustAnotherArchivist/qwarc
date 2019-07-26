@@ -4,6 +4,7 @@ import importlib.util
 import logging
 import os.path
 import qwarc
+import qwarc.version
 import sys
 import time
 
@@ -51,6 +52,7 @@ def check_files(specFilename, logFilename):
 
 def main():
 	parser = argparse.ArgumentParser(formatter_class = argparse.ArgumentDefaultsHelpFormatter)
+	parser.add_argument('--version', action = 'version', version = f'qwarc {qwarc.version.__version__}')
 	parser.add_argument('--log', metavar = 'LOGFILE', default = './qwarc.log')
 	parser.add_argument('--database', metavar = 'DBFILE', default = './qwarc.db')
 	parser.add_argument('--warc', metavar = 'PREFIX', help = 'prefix for the WARC filenames', default = './qwarc')
