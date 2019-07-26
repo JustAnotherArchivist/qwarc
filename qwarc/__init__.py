@@ -197,7 +197,7 @@ class QWARC:
 
 		try:
 			async def wait_for_free_task():
-				nonlocal tasks, freeSessions, db, emptyTodoSleep
+				nonlocal tasks, freeSessions, db
 				done, pending = await asyncio.wait(tasks, return_when = concurrent.futures.FIRST_COMPLETED)
 				for future in done:
 					# TODO Replace all of this with `if future.cancelled():`
@@ -236,7 +236,6 @@ class QWARC:
 
 			while True:
 				while len(tasks) >= self._concurrency:
-					emptyTodoFullReached = True
 					await wait_for_free_task()
 
 				if self._minFreeDisk and qwarc.utils.too_little_disk_space(self._minFreeDisk):
@@ -269,7 +268,6 @@ class QWARC:
 							# create_db could insert a dummy item which is marked as done when the DB is ready
 							cursor.execute('COMMIT')
 							break
-					emptyTodoSleep = 0
 					id, itemType, itemValue, status = result
 					cursor.execute('UPDATE items SET status = ? WHERE id = ?', (STATUS_INPROGRESS, id))
 					cursor.execute('COMMIT')
