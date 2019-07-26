@@ -1,6 +1,8 @@
 import fcntl
 import io
+import json
 import logging
+import qwarc.utils
 import time
 import warcio
 
@@ -46,6 +48,16 @@ class WARC:
 		self._warcWriter = warcio.warcwriter.WARCWriter(self._file, gzip = True)
 		self._closed = False
 		self._counter += 1
+		self.write_warcinfo_record()
+
+	def write_warcinfo_record(self):
+		record = self._warcWriter.create_warc_record(
+		    'urn:qwarc:warcinfo',
+		    'warcinfo',
+		    payload = io.BytesIO(json.dumps(qwarc.utils.get_software_info(), indent = 2).encode('utf-8')),
+		    warc_headers_dict = {'Content-Type': 'application/json; charset=utf-8'},
+		  )
+		self._warcWriter.write_record(record)
 
 	def write_client_response(self, response):
 		'''

@@ -1,7 +1,11 @@
 from qwarc.const import *
 import aiohttp
 import asyncio
+import functools
+import logging
 import os
+import pkg_resources
+import platform
 
 
 PAGESIZE = os.sysconf('SC_PAGE_SIZE')
@@ -181,3 +185,33 @@ def handle_response_limit_error_retries(maxRetries, handler = handle_response_de
 			action = ACTION_RETRIES_EXCEEDED
 		return action, writeToWarc
 	return _handler
+
+
+def _get_dependency_versions(pkg):
+	pending = {pkg}
+	have = {pkg}
+	while pending:
+		key = pending.pop()
+		try:
+			dist = pkg_resources.get_distribution(key)
+		except pkg_resources.DistributionNotFound:
+			logging.error(f'Unable to get distribution {key}')
+		yield dist.key, dist.version
+		for requirement in dist.requires():
+			if requirement.key not in have:
+				pending.add(requirement.key)
+				have.add(requirement.key)
+
+
+@functools.lru_cache(maxsize = 1)
+def get_software_info():
+	# Taken from crocoite.utils, authored by PromyLOPh in commit 6ccd72ab on 2018-12-08 under MIT licence
+	return {
+		'platform': platform.platform(),
+		'python': {
+			'implementation': platform.python_implementation(),
+			'version': platform.python_version(),
+			'build': platform.python_build(),
+		},
+		'self': [{"package": package, "version": version} for package, version in _get_dependency_versions(__package__)],
+	  }
