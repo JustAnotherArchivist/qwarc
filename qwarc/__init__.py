@@ -246,6 +246,13 @@ class QWARC:
 					sleepTasks.add(sleepTask)
 					continue
 
+				if os.path.exists('STOP'):
+					logging.info('Gracefully shutting down due to STOP file')
+					break
+				if self._memoryLimit and qwarc.utils.uses_too_much_memory(self._memoryLimit):
+					logging.info(f'Gracefully shutting down due to memory usage (current = {qwarc.utils.get_rss()} > limit = {self._memoryLimit})')
+					break
+
 				cursor = await self.obtain_exclusive_db_lock(db)
 				try:
 					cursor.execute('SELECT id, type, value, status FROM items WHERE status = ? LIMIT 1', (STATUS_TODO,))
@@ -285,12 +292,6 @@ class QWARC:
 				task.itemValue = itemValue
 				task.item = item
 				tasks.add(task)
-				if os.path.exists('STOP'):
-					logging.info('Gracefully shutting down due to STOP file')
-					break
-				if self._memoryLimit and qwarc.utils.uses_too_much_memory(self._memoryLimit):
-					logging.info(f'Gracefully shutting down due to memory usage (current = {qwarc.utils.get_rss()} > limit = {self._memoryLimit})')
-					break
 
 			for sleepTask in sleepTasks:
 				sleepTask.cancel()
