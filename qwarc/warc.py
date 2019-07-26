@@ -1,8 +1,11 @@
 import fcntl
+import gzip
 import io
 import json
 import logging
+import os
 import qwarc.utils
+import tempfile
 import time
 import warcio
 
@@ -27,6 +30,19 @@ class WARC:
 
 		self._dedupe = dedupe
 		self._dedupeMap = {}
+
+		self._logFile = None
+		self._logHandler = None
+		self._setup_logger()
+
+	def _setup_logger(self):
+		rootLogger = logging.getLogger()
+		formatter = qwarc.utils.LogFormatter()
+		self._logFile = tempfile.NamedTemporaryFile(prefix = 'qwarc-warc-', suffix = '.log.gz', delete = False)
+		self._logHandler = logging.StreamHandler(io.TextIOWrapper(gzip.GzipFile(filename = self._logFile.name, mode = 'wb'), encoding = 'utf-8'))
+		self._logHandler.setFormatter(formatter)
+		rootLogger.addHandler(self._logHandler)
+		self._logHandler.setLevel(logging.INFO)
 
 	def _ensure_opened(self):
 		'''Open the next file that doesn't exist yet if there is currently no file opened'''
@@ -116,7 +132,7 @@ class WARC:
 		if self._maxFileSize and self._file.tell() > self._maxFileSize:
 			self.close()
 
-	def close(self):
+	def _close_file(self):
 		'''Close the currently opened WARC'''
 
 		if not self._closed:
@@ -124,3 +140,40 @@ class WARC:
 			self._warcWriter = None
 			self._file = None
 			self._closed = True
+
+	def _write_meta_warc(self):
+		filename = f'{self._prefix}-meta.warc.gz'
+		#TODO: Handle OSError on fcntl.flock and retry
+		self._file = open(filename, 'ab')
+		try:
+			fcntl.flock(self._file.fileno(), fcntl.LOCK_EX)
+			logging.info(f'Opened {filename}')
+			self._warcWriter = warcio.warcwriter.WARCWriter(self._file, gzip = True)
+			self._closed = False
+
+			self.write_warcinfo_record()
+
+			self._logHandler.flush()
+			self._logHandler.stream.close()
+			record = self._warcWriter.create_warc_record(
+			    'urn:qwarc:log',
+			    'resource',
+			    payload = gzip.GzipFile(self._logFile.name),
+			    warc_headers_dict = {'Content-Type': 'text/plain; charset=utf-8'},
+			  )
+			self._warcWriter.write_record(record)
+		finally:
+			self._close_file()
+
+	def close(self):
+		'''Clean up everything.'''
+		self._close_file()
+		self._write_meta_warc()
+		logging.getLogger().removeHandler(self._logHandler)
+		try:
+			os.remove(self._logFile.name)
+		except OSError:
+			logging.error('Could not remove temporary log file')
+		self._logFile = None
+		self._logHandler.close()
+		self._logHandler = None

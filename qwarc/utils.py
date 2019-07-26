@@ -6,6 +6,7 @@ import logging
 import os
 import pkg_resources
 import platform
+import time
 
 
 PAGESIZE = os.sysconf('SC_PAGE_SIZE')
@@ -215,3 +216,17 @@ def get_software_info():
 		},
 		'self': [{"package": package, "version": version} for package, version in _get_dependency_versions(__package__)],
 	  }
+
+
+class LogFormatter(logging.Formatter):
+	def __init__(self):
+		super().__init__('%(asctime)s.%(msecs)03dZ %(levelname)s %(itemString)s %(message)s', datefmt = '%Y-%m-%d %H:%M:%S')
+		self.converter = time.gmtime
+
+	def format(self, record):
+		if not hasattr(record, 'itemString'):
+			if hasattr(record, 'itemType') and hasattr(record, 'itemValue'):
+				record.itemString = f'{record.itemType}:{record.itemValue}'
+			else:
+				record.itemString = 'None'
+		return super().format(record)

@@ -4,19 +4,9 @@ import importlib.util
 import logging
 import os.path
 import qwarc
+import qwarc.utils
 import qwarc.version
 import sys
-import time
-
-
-class Formatter(logging.Formatter):
-	def format(self, record):
-		if not hasattr(record, 'itemString'):
-			if hasattr(record, 'itemType') and hasattr(record, 'itemValue'):
-				record.itemString = f'{record.itemType}:{record.itemValue}'
-			else:
-				record.itemString = 'None'
-		return super().format(record)
 
 
 def setup_logging(logFilename):
@@ -24,8 +14,7 @@ def setup_logging(logFilename):
 	rootLogger.handlers = []
 	rootLogger.setLevel(logging.INFO)
 
-	formatter = Formatter('%(asctime)s.%(msecs)03dZ %(levelname)s %(itemString)s %(message)s', datefmt = '%Y-%m-%d %H:%M:%S')
-	formatter.converter = time.gmtime
+	formatter = qwarc.utils.LogFormatter()
 
 	fileHandler = logging.FileHandler(logFilename)
 	fileHandler.setFormatter(formatter)
