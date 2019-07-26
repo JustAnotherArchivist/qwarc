@@ -26,13 +26,11 @@ class WARC:
 		self._dedupe = dedupe
 		self._dedupeMap = {}
 
-		self._cycle()
+	def _ensure_opened(self):
+		'''Open the next file that doesn't exist yet if there is currently no file opened'''
 
-	def _cycle(self):
-		'''Close the current file, open the next file that doesn't exist yet'''
-
-		#TODO: This opens a new file also at the end, which can result in empty WARCs. Should try to reorder this to only open a WARC when writing a record, and to only close the current WARC if the size is exceeded after write_client_response.
-		self.close()
+		if not self._closed:
+			return
 		while True:
 			filename = f'{self._prefix}-{self._counter:05d}.warc.gz'
 			try:
@@ -55,6 +53,7 @@ class WARC:
 		A new WARC will be started automatically if the size of the current file exceeds the limit after writing all requests and responses from this `response` to the current WARC.
 		'''
 
+		self._ensure_opened()
 		for r in response.iter_all():
 			requestDate = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(r.rawRequestTimestamp))
 			requestRecord = self._warcWriter.create_warc_record(
@@ -103,7 +102,7 @@ class WARC:
 			self._warcWriter.write_record(responseRecord)
 
 		if self._maxFileSize and self._file.tell() > self._maxFileSize:
-			self._cycle()
+			self.close()
 
 	def close(self):
 		'''Close the currently opened WARC'''
