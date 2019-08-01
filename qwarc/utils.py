@@ -198,6 +198,7 @@ def _get_dependency_versions(*pkgs):
 			dist = pkg_resources.get_distribution(key)
 		except pkg_resources.DistributionNotFound:
 			logging.error(f'Unable to get distribution {key}')
+			continue
 		yield dist.key, dist.version
 		for requirement in dist.requires():
 			if requirement.key not in have:
