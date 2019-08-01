@@ -210,8 +210,8 @@ class WARC:
 	def close(self):
 		'''Clean up everything.'''
 		self._close_file()
-		self._write_meta_warc(self._write_log_record)
 		logging.getLogger().removeHandler(self._logHandler)
+		self._write_meta_warc(self._write_log_record)
 		try:
 			os.remove(self._logFile.name)
 		except OSError:
