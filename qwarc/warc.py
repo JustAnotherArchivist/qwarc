@@ -72,7 +72,7 @@ class WARC:
 			else:
 				break
 		logging.info(f'Opened {filename}')
-		self._warcWriter = warcio.warcwriter.WARCWriter(self._file, gzip = True)
+		self._warcWriter = warcio.warcwriter.WARCWriter(self._file, gzip = True, warc_version = '1.1')
 		self._closed = False
 		self._counter += 1
 		self.write_warcinfo_record()
@@ -200,7 +200,7 @@ class WARC:
 		try:
 			fcntl.flock(self._file.fileno(), fcntl.LOCK_EX)
 			logging.info(f'Opened {filename}')
-			self._warcWriter = warcio.warcwriter.WARCWriter(self._file, gzip = True)
+			self._warcWriter = warcio.warcwriter.WARCWriter(self._file, gzip = True, warc_version = '1.1')
 			self._closed = False
 
 			callback()
