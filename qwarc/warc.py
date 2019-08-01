@@ -75,9 +75,9 @@ class WARC:
 		self._warcWriter = warcio.warcwriter.WARCWriter(self._file, gzip = True, warc_version = '1.1')
 		self._closed = False
 		self._counter += 1
-		self.write_warcinfo_record()
+		self._write_warcinfo_record()
 
-	def write_warcinfo_record(self):
+	def _write_warcinfo_record(self):
 		data = {
 			'software': qwarc.utils.get_software_info(self._specFile, self._specDependencies),
 			'command': self._command,
@@ -153,7 +153,7 @@ class WARC:
 		if self._maxFileSize and self._file.tell() > self._maxFileSize:
 			self.close()
 
-	def write_resource_records(self):
+	def _write_resource_records(self):
 		'''Write spec file and dependencies'''
 		assert self._metaWarcinfoRecordID is not None, 'write_warcinfo_record must be called first'
 
@@ -168,8 +168,8 @@ class WARC:
 				self._warcWriter.write_record(record)
 
 	def _write_initial_meta_records(self):
-		self._metaWarcinfoRecordID = self.write_warcinfo_record()
-		self.write_resource_records()
+		self._metaWarcinfoRecordID = self._write_warcinfo_record()
+		self._write_resource_records()
 
 	def _write_log_record(self):
 		assert self._metaWarcinfoRecordID is not None, 'write_warcinfo_record must be called first'
