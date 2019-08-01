@@ -43,6 +43,9 @@ class WARC:
 		self._logHandler = None
 		self._setup_logger()
 
+		self._metaWarcinfoRecordID = None
+		self._write_meta_warc(self._write_initial_meta_records)
+
 	def _setup_logger(self):
 		rootLogger = logging.getLogger()
 		formatter = qwarc.utils.LogFormatter()
@@ -91,6 +94,7 @@ class WARC:
 		    warc_headers_dict = {'Content-Type': 'application/json; charset=utf-8'},
 		  )
 		self._warcWriter.write_record(record)
+		return record.rec_headers.get_header('WARC-Record-ID')
 
 	def write_client_response(self, response):
 		'''
@@ -151,6 +155,7 @@ class WARC:
 
 	def write_resource_records(self):
 		'''Write spec file and dependencies'''
+		assert self._metaWarcinfoRecordID is not None, 'write_warcinfo_record must be called first'
 
 		for type_, fn in itertools.chain((('specfile', self._specFile),), map(lambda x: ('spec-dependency-file', x), self._specDependencies.files)):
 			with open(fn, 'rb') as f:
@@ -158,9 +163,26 @@ class WARC:
 				    f'file://{fn}',
 				    'resource',
 				    payload = f,
-				    warc_headers_dict = {'X-QWARC-Type': type_},
+				    warc_headers_dict = {'X-QWARC-Type': type_, 'WARC-Warcinfo-ID': self._metaWarcinfoRecordID},
 				  )
 				self._warcWriter.write_record(record)
+
+	def _write_initial_meta_records(self):
+		self._metaWarcinfoRecordID = self.write_warcinfo_record()
+		self.write_resource_records()
+
+	def _write_log_record(self):
+		assert self._metaWarcinfoRecordID is not None, 'write_warcinfo_record must be called first'
+
+		self._logHandler.flush()
+		self._logHandler.stream.close()
+		record = self._warcWriter.create_warc_record(
+		    'urn:qwarc:log',
+		    'resource',
+		    payload = gzip.GzipFile(self._logFile.name),
+		    warc_headers_dict = {'Content-Type': 'text/plain; charset=utf-8', 'WARC-Warcinfo-ID': self._metaWarcinfoRecordID},
+		  )
+		self._warcWriter.write_record(record)
 
 	def _close_file(self):
 		'''Close the currently opened WARC'''
@@ -171,7 +193,7 @@ class WARC:
 			self._file = None
 			self._closed = True
 
-	def _write_meta_warc(self):
+	def _write_meta_warc(self, callback):
 		filename = f'{self._prefix}-meta.warc.gz'
 		#TODO: Handle OSError on fcntl.flock and retry
 		self._file = open(filename, 'ab')
@@ -181,26 +203,14 @@ class WARC:
 			self._warcWriter = warcio.warcwriter.WARCWriter(self._file, gzip = True)
 			self._closed = False
 
-			self.write_warcinfo_record()
-
-			self.write_resource_records()
-
-			self._logHandler.flush()
-			self._logHandler.stream.close()
-			record = self._warcWriter.create_warc_record(
-			    'urn:qwarc:log',
-			    'resource',
-			    payload = gzip.GzipFile(self._logFile.name),
-			    warc_headers_dict = {'Content-Type': 'text/plain; charset=utf-8'},
-			  )
-			self._warcWriter.write_record(record)
+			callback()
 		finally:
 			self._close_file()
 
 	def close(self):
 		'''Clean up everything.'''
 		self._close_file()
-		self._write_meta_warc()
+		self._write_meta_warc(self._write_log_record)
 		logging.getLogger().removeHandler(self._logHandler)
 		try:
 			os.remove(self._logFile.name)
