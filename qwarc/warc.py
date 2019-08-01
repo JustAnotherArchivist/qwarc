@@ -1,6 +1,7 @@
 import fcntl
 import gzip
 import io
+import itertools
 import json
 import logging
 import os
@@ -11,13 +12,16 @@ import warcio
 
 
 class WARC:
-	def __init__(self, prefix, maxFileSize, dedupe):
+	def __init__(self, prefix, maxFileSize, dedupe, command, specFile, specDependencies):
 		'''
 		Initialise the WARC writer
 
 		prefix: str, path prefix for WARCs; a dash, a five-digit number, and ".warc.gz" will be appended.
 		maxFileSize: int, maximum size of an individual WARC. Use 0 to disable splitting.
 		dedupe: bool, whether to enable record deduplication
+		command: list, the command line call for qwarc
+		specFile: str, path to the spec file
+		specDependencies: qwarc.utils.SpecDependencies
 		'''
 
 		self._prefix = prefix
@@ -30,6 +34,10 @@ class WARC:
 
 		self._dedupe = dedupe
 		self._dedupeMap = {}
+
+		self._command = command
+		self._specFile = specFile
+		self._specDependencies = specDependencies
 
 		self._logFile = None
 		self._logHandler = None
@@ -67,10 +75,19 @@ class WARC:
 		self.write_warcinfo_record()
 
 	def write_warcinfo_record(self):
+		data = {
+			'software': qwarc.utils.get_software_info(self._specFile, self._specDependencies),
+			'command': self._command,
+			'files': {
+				'spec': self._specFile,
+				'spec-dependencies': self._specDependencies.files
+			  },
+			'extra': self._specDependencies.extra,
+		  }
 		record = self._warcWriter.create_warc_record(
 		    'urn:qwarc:warcinfo',
 		    'warcinfo',
-		    payload = io.BytesIO(json.dumps(qwarc.utils.get_software_info(), indent = 2).encode('utf-8')),
+		    payload = io.BytesIO(json.dumps(data, indent = 2).encode('utf-8')),
 		    warc_headers_dict = {'Content-Type': 'application/json; charset=utf-8'},
 		  )
 		self._warcWriter.write_record(record)
@@ -132,6 +149,19 @@ class WARC:
 		if self._maxFileSize and self._file.tell() > self._maxFileSize:
 			self.close()
 
+	def write_resource_records(self):
+		'''Write spec file and dependencies'''
+
+		for type_, fn in itertools.chain((('specfile', self._specFile),), map(lambda x: ('spec-dependency-file', x), self._specDependencies.files)):
+			with open(fn, 'rb') as f:
+				record = self._warcWriter.create_warc_record(
+				    f'file://{fn}',
+				    'resource',
+				    payload = f,
+				    warc_headers_dict = {'X-QWARC-Type': type_},
+				  )
+				self._warcWriter.write_record(record)
+
 	def _close_file(self):
 		'''Close the currently opened WARC'''
 
@@ -152,6 +182,8 @@ class WARC:
 			self._closed = False
 
 			self.write_warcinfo_record()
+
+			self.write_resource_records()
 
 			self._logHandler.flush()
 			self._logHandler.stream.close()

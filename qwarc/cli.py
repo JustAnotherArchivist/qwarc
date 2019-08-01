@@ -62,11 +62,15 @@ def main():
 	spec = importlib.util.spec_from_file_location('spec', args.specfile)
 	specMod = importlib.util.module_from_spec(spec)
 	spec.loader.exec_module(specMod)
+	specDependencies = specMod.__dict__.get('specDependencies', qwarc.utils.SpecDependencies())
 
 	a = qwarc.QWARC(
 		itemClasses = qwarc.Item.__subclasses__(),
 		warcBasePath = args.warc,
 		dbPath = args.database,
+		command = sys.argv,
+		specFile = args.specfile,
+		specDependencies = specDependencies,
 		concurrency = args.concurrency,
 		memoryLimit = args.memorylimit,
 		minFreeDisk = args.disklimit,

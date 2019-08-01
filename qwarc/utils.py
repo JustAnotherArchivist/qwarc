@@ -7,6 +7,7 @@ import os
 import pkg_resources
 import platform
 import time
+import typing
 
 
 PAGESIZE = os.sysconf('SC_PAGE_SIZE')
@@ -188,9 +189,9 @@ def handle_response_limit_error_retries(maxRetries, handler = handle_response_de
 	return _handler
 
 
-def _get_dependency_versions(pkg):
-	pending = {pkg}
-	have = {pkg}
+def _get_dependency_versions(*pkgs):
+	pending = set(pkgs)
+	have = set(pkgs)
 	while pending:
 		key = pending.pop()
 		try:
@@ -205,8 +206,11 @@ def _get_dependency_versions(pkg):
 
 
 @functools.lru_cache(maxsize = 1)
-def get_software_info():
-	# Taken from crocoite.utils, authored by PromyLOPh in commit 6ccd72ab on 2018-12-08 under MIT licence
+def get_software_info(specFile, specDependencies):
+	# Based on crocoite.utils, authored by PromyLOPh in commit 6ccd72ab on 2018-12-08 under MIT licence
+	baseDependencyPackageVersions = list(_get_dependency_versions(__package__))
+	baseDependencyPackages = set(x[0] for x in baseDependencyPackageVersions)
+	specDependencyPackageVersions = list(_get_dependency_versions(*specDependencies.packages))
 	return {
 		'platform': platform.platform(),
 		'python': {
@@ -214,7 +218,8 @@ def get_software_info():
 			'version': platform.python_version(),
 			'build': platform.python_build(),
 		},
-		'self': [{"package": package, "version": version} for package, version in _get_dependency_versions(__package__)],
+		'self': [{"package": package, "version": version} for package, version in baseDependencyPackageVersions],
+		'spec': [{"package": package, "version": version} for package, version in specDependencyPackageVersions if package not in baseDependencyPackages],
 	  }
 
 
@@ -230,3 +235,9 @@ class LogFormatter(logging.Formatter):
 			else:
 				record.itemString = 'None'
 		return super().format(record)
+
+
+class SpecDependencies(typing.NamedTuple):
+	packages: tuple = ()
+	files: tuple = ()
+	extra: typing.Any = None
