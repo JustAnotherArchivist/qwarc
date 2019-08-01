@@ -104,7 +104,8 @@ class WARC:
 
 		self._ensure_opened()
 		for r in response.iter_all():
-			requestDate = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(r.rawRequestTimestamp))
+			usec = f'{(r.rawRequestTimestamp - int(r.rawRequestTimestamp)):.6f}'[2:]
+			requestDate = time.strftime(f'%Y-%m-%dT%H:%M:%S.{usec}Z', time.gmtime(r.rawRequestTimestamp))
 			requestRecord = self._warcWriter.create_warc_record(
 			    str(r.url),
 			    'request',
