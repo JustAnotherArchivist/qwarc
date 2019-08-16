@@ -162,13 +162,13 @@ class WARC:
 		'''Write spec file and dependencies'''
 		assert self._metaWarcinfoRecordID is not None, 'write_warcinfo_record must be called first'
 
-		for type_, fn in itertools.chain((('specfile', self._specFile),), map(lambda x: ('spec-dependency-file', x), self._specDependencies.files)):
+		for type_, contentType, fn in itertools.chain((('specfile', 'application/x-python', self._specFile),), map(lambda x: ('spec-dependency-file', 'application/octet-stream', x), self._specDependencies.files)):
 			with open(fn, 'rb') as f:
 				record = self._warcWriter.create_warc_record(
 				    f'file://{fn}',
 				    'resource',
 				    payload = f,
-				    warc_headers_dict = {'X-QWARC-Type': type_, 'WARC-Warcinfo-ID': self._metaWarcinfoRecordID},
+				    warc_headers_dict = {'X-QWARC-Type': type_, 'WARC-Warcinfo-ID': self._metaWarcinfoRecordID, 'Content-Type': contentType},
 				  )
 				self._warcWriter.write_record(record)
 
