@@ -43,6 +43,7 @@ class WARC:
 		self._logHandler = None
 		self._setup_logger()
 
+		self._dataWarcinfoRecordID = None
 		self._metaWarcinfoRecordID = None
 		self._write_meta_warc(self._write_initial_meta_records)
 
@@ -75,7 +76,7 @@ class WARC:
 		self._warcWriter = warcio.warcwriter.WARCWriter(self._file, gzip = True, warc_version = '1.1')
 		self._closed = False
 		self._counter += 1
-		self._write_warcinfo_record()
+		self._dataWarcinfoRecordID = self._write_warcinfo_record()
 
 	def _write_warcinfo_record(self):
 		data = {
@@ -113,6 +114,7 @@ class WARC:
 			    warc_headers_dict = {
 			      'WARC-Date': requestDate,
 			      'WARC-IP-Address': r.remoteAddress[0],
+			      'WARC-Warcinfo-ID': self._dataWarcinfoRecordID,
 			    }
 			  )
 			requestRecordID = requestRecord.rec_headers.get_header('WARC-Record-ID')
@@ -124,6 +126,7 @@ class WARC:
 			      'WARC-Date': requestDate,
 			      'WARC-IP-Address': r.remoteAddress[0],
 			      'WARC-Concurrent-To': requestRecordID,
+			      'WARC-Warcinfo-ID': self._dataWarcinfoRecordID,
 			    }
 			  )
 			payloadDigest = responseRecord.rec_headers.get_header('WARC-Payload-Digest')
@@ -144,6 +147,7 @@ class WARC:
 					      'WARC-Concurrent-To': requestRecordID,
 					      'WARC-Refers-To': refersToRecordId,
 					      'WARC-Truncated': 'length',
+					      'WARC-Warcinfo-ID': self._dataWarcinfoRecordID,
 					    }
 					  )
 				else:
