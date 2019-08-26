@@ -91,7 +91,7 @@ class WARC:
 			'extra': self._specDependencies.extra,
 		  }
 		record = self._warcWriter.create_warc_record(
-		    'urn:qwarc:warcinfo',
+		    'urn:X-qwarc:warcinfo',
 		    'warcinfo',
 		    payload = io.BytesIO(json.dumps(data, indent = 2).encode('utf-8')),
 		    warc_headers_dict = {'Content-Type': 'application/json; charset=utf-8'},
