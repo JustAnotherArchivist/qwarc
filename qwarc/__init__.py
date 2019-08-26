@@ -31,7 +31,7 @@ class Item:
 
 		self.childItems = []
 
-	async def fetch(self, url, responseHandler = qwarc.utils.handle_response_default, method = 'GET', data = None, headers = []):
+	async def fetch(self, url, responseHandler = qwarc.utils.handle_response_default, method = 'GET', data = None, headers = [], verify_ssl = True):
 		'''
 		HTTP GET or POST a URL
 
@@ -64,7 +64,7 @@ class Item:
 				try:
 					with _aiohttp.Timeout(60):
 						self.logger.info(f'Fetching {url}')
-						response = await self.session.request(method, url, data = data, headers = headers, allow_redirects = False)
+						response = await self.session.request(method, url, data = data, headers = headers, allow_redirects = False, verify_ssl = verify_ssl)
 						try:
 							ret = await response.read()
 						except:
