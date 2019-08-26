@@ -92,7 +92,7 @@ class WARC:
 		digester = warcio.utils.Digester('sha1')
 		digester.update(payload.getvalue())
 		record = self._warcWriter.create_warc_record(
-		    'urn:X-qwarc:warcinfo',
+		    None,
 		    'warcinfo',
 		    payload = payload,
 		    warc_headers_dict = {'Content-Type': 'application/json; charset=utf-8', 'WARC-Block-Digest': str(digester)},
