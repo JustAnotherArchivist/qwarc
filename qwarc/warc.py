@@ -156,7 +156,7 @@ class WARC:
 			self._warcWriter.write_record(responseRecord)
 
 		if self._maxFileSize and self._file.tell() > self._maxFileSize:
-			self.close()
+			self._close_file()
 
 	def _write_resource_records(self):
 		'''Write spec file and dependencies'''
