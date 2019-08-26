@@ -71,6 +71,7 @@ def main():
 		command = sys.argv,
 		specFile = args.specfile,
 		specDependencies = specDependencies,
+		logFilename = args.log,
 		concurrency = args.concurrency,
 		memoryLimit = args.memorylimit,
 		minFreeDisk = args.disklimit,

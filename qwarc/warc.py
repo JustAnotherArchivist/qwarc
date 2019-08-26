@@ -12,7 +12,7 @@ import warcio
 
 
 class WARC:
-	def __init__(self, prefix, maxFileSize, dedupe, command, specFile, specDependencies):
+	def __init__(self, prefix, maxFileSize, dedupe, command, specFile, specDependencies, logFilename):
 		'''
 		Initialise the WARC writer
 
@@ -22,6 +22,7 @@ class WARC:
 		command: list, the command line call for qwarc
 		specFile: str, path to the spec file
 		specDependencies: qwarc.utils.SpecDependencies
+		logFilename: str, name of the log file written by this process
 		'''
 
 		self._prefix = prefix
@@ -42,6 +43,7 @@ class WARC:
 		self._logFile = None
 		self._logHandler = None
 		self._setup_logger()
+		self._logFilename = logFilename
 
 		self._dataWarcinfoRecordID = None
 		self._metaWarcinfoRecordID = None
@@ -182,10 +184,10 @@ class WARC:
 		self._logHandler.flush()
 		self._logHandler.stream.close()
 		record = self._warcWriter.create_warc_record(
-		    'urn:qwarc:log',
+		    f'file://{self._logFilename}',
 		    'resource',
 		    payload = gzip.GzipFile(self._logFile.name),
-		    warc_headers_dict = {'Content-Type': 'text/plain; charset=utf-8', 'WARC-Warcinfo-ID': self._metaWarcinfoRecordID},
+		    warc_headers_dict = {'X-QWARC-Type': 'log', 'Content-Type': 'text/plain; charset=utf-8', 'WARC-Warcinfo-ID': self._metaWarcinfoRecordID},
 		  )
 		self._warcWriter.write_record(record)
 

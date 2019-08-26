@@ -130,7 +130,7 @@ class Item:
 
 
 class QWARC:
-	def __init__(self, itemClasses, warcBasePath, dbPath, command, specFile, specDependencies, concurrency = 1, memoryLimit = 0, minFreeDisk = 0, warcSizeLimit = 0, warcDedupe = False):
+	def __init__(self, itemClasses, warcBasePath, dbPath, command, specFile, specDependencies, logFilename, concurrency = 1, memoryLimit = 0, minFreeDisk = 0, warcSizeLimit = 0, warcDedupe = False):
 		'''
 		itemClasses: iterable of Item
 		warcBasePath: str, base name of the WARC files
@@ -138,6 +138,7 @@ class QWARC:
 		command: list, the command line used to invoke qwarc
 		specFile: str, path to the spec file
 		specDependencies: qwarc.utils.SpecDependencies
+		logFilename: str, name of the log file written by this process
 		concurrency: int, number of concurrently processed items
 		memoryLimit: int, gracefully stop when the process uses more than memoryLimit bytes of RSS; 0 disables the memory check
 		minFreeDisk: int, pause when there's less than minFreeDisk space on the partition where WARCs are written; 0 disables the disk space check
@@ -151,6 +152,7 @@ class QWARC:
 		self._command = command
 		self._specFile = specFile
 		self._specDependencies = specDependencies
+		self._logFilename = logFilename
 		self._concurrency = concurrency
 		self._memoryLimit = memoryLimit
 		self._minFreeDisk = minFreeDisk
@@ -195,7 +197,7 @@ class QWARC:
 			sessions.append(session)
 			freeSessions.append(session)
 
-		warc = qwarc.warc.WARC(self._warcBasePath, self._warcSizeLimit, self._warcDedupe, self._command, self._specFile, self._specDependencies)
+		warc = qwarc.warc.WARC(self._warcBasePath, self._warcSizeLimit, self._warcDedupe, self._command, self._specFile, self._specDependencies, self._logFilename)
 
 		db = sqlite3.connect(self._dbPath, timeout = 1)
 		db.isolation_level = None # Transactions are handled manually below.
