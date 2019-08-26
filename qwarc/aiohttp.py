@@ -13,8 +13,6 @@ import time
 # aiohttp also does connection pooling/reuse, so ClientRequest resets the raw data when the request is sent. (This would not work with pipelining, but aiohttp does not support pipelining: https://github.com/aio-libs/aiohttp/issues/1740 )
 # This code has been developed for aiohttp version 2.3.10.
 
-#TODO: THERE IS A MEMORY LEAK HERE SOMEWHERE! I spent a whole day trying to find it without success.
-
 
 class RawData:
 	def __init__(self):
