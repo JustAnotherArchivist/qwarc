@@ -88,11 +88,15 @@ class WARC:
 			  },
 			'extra': self._specDependencies.extra,
 		  }
+		payload = io.BytesIO(json.dumps(data, indent = 2).encode('utf-8'))
+		digester = warcio.utils.Digester('sha1')
+		digester.update(payload.getvalue())
 		record = self._warcWriter.create_warc_record(
 		    'urn:X-qwarc:warcinfo',
 		    'warcinfo',
-		    payload = io.BytesIO(json.dumps(data, indent = 2).encode('utf-8')),
-		    warc_headers_dict = {'Content-Type': 'application/json; charset=utf-8'},
+		    payload = payload,
+		    warc_headers_dict = {'Content-Type': 'application/json; charset=utf-8', 'WARC-Block-Digest': str(digester)},
+		    length = len(payload.getvalue()),
 		  )
 		self._warcWriter.write_record(record)
 		return record.rec_headers.get_header('WARC-Record-ID')
