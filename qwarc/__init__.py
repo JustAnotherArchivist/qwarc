@@ -118,7 +118,7 @@ class Item:
 	@classmethod
 	def _gen(cls):
 		for x in cls.generate():
-			yield (cls.itemType, x, STATUS_TODO) 
+			yield (cls.itemType, x, STATUS_TODO)
 
 	def add_item(self, itemClassOrType, itemValue):
 		if issubclass(itemClassOrType, Item):
