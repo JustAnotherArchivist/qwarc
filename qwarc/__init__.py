@@ -21,7 +21,8 @@ import yarl
 class Item:
 	itemType = None
 
-	def __init__(self, itemValue, session, headers, warc):
+	def __init__(self, qwarcObj, itemValue, session, headers, warc):
+		self.qwarcObj = qwarcObj
 		self.itemValue = itemValue
 		self.session = session
 		self.headers = headers
@@ -120,13 +121,19 @@ class Item:
 		for x in cls.generate():
 			yield (cls.itemType, x, STATUS_TODO)
 
-	def add_item(self, itemClassOrType, itemValue):
+	def add_subitem(self, itemClassOrType, itemValue):
 		if issubclass(itemClassOrType, Item):
 			item = (itemClassOrType.itemType, itemValue)
 		else:
 			item = (itemClassOrType, itemValue)
 		if item not in self.childItems:
 			self.childItems.append(item)
+
+	async def flush_subitems(self):
+		await self.qwarcObj.flush_subitems(self)
+
+	def clear_subitems(self):
+		self.childItems = []
 
 
 class QWARC:
@@ -187,7 +194,7 @@ class QWARC:
 			itemClass = self._itemTypeMap[itemType]
 		except KeyError:
 			raise RuntimeError(f'No such item type: {itemType!r}')
-		return itemClass(itemValue, session, headers, self._warc)
+		return itemClass(self, itemValue, session, headers, self._warc)
 
 	async def _wait_for_free_task(self):
 		if not self._tasks:
@@ -338,6 +345,10 @@ class QWARC:
 			self._db.close()
 
 			self._reset_working_vars()
+
+	async def flush_subitems(self, item):
+		await self._insert_subitems(item)
+		item.clear_subitems()
 
 	def create_db(self):
 		db = sqlite3.connect(self._dbPath, timeout = 1)
