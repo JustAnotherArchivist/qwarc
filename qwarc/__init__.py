@@ -135,6 +135,12 @@ class Item:
 	def clear_subitems(self):
 		self.childItems = []
 
+	@classmethod
+	def get_subclasses(cls):
+		for subclass in cls.__subclasses__():
+			yield subclass
+			yield from subclass.get_subclasses()
+
 
 class QWARC:
 	def __init__(self, itemClasses, warcBasePath, dbPath, command, specFile, specDependencies, logFilename, concurrency = 1, memoryLimit = 0, minFreeDisk = 0, warcSizeLimit = 0, warcDedupe = False):

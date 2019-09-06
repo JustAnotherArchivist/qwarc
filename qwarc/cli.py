@@ -65,7 +65,7 @@ def main():
 	specDependencies = specMod.__dict__.get('specDependencies', qwarc.utils.SpecDependencies())
 
 	a = qwarc.QWARC(
-		itemClasses = qwarc.Item.__subclasses__(),
+		itemClasses = set(qwarc.Item.get_subclasses()),
 		warcBasePath = args.warc,
 		dbPath = args.database,
 		command = sys.argv,
