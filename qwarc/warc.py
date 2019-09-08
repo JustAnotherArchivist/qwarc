@@ -89,6 +89,7 @@ class WARC:
 			'extra': self._specDependencies.extra,
 		  }
 		payload = io.BytesIO(json.dumps(data, indent = 2).encode('utf-8'))
+		# Workaround for https://github.com/webrecorder/warcio/issues/87
 		digester = warcio.utils.Digester('sha1')
 		digester.update(payload.getvalue())
 		record = self._warcWriter.create_warc_record(
