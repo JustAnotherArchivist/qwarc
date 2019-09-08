@@ -40,22 +40,10 @@ class WARC:
 		self._specFile = specFile
 		self._specDependencies = specDependencies
 
-		self._logFile = None
-		self._logHandler = None
-		self._setup_logger()
 		self._logFilename = logFilename
 
 		self._metaWarcinfoRecordID = None
 		self._write_meta_warc(self._write_initial_meta_records)
-
-	def _setup_logger(self):
-		rootLogger = logging.getLogger()
-		formatter = qwarc.utils.LogFormatter()
-		self._logFile = tempfile.NamedTemporaryFile(prefix = 'qwarc-warc-', suffix = '.log.gz', delete = False)
-		self._logHandler = logging.StreamHandler(io.TextIOWrapper(gzip.GzipFile(filename = self._logFile.name, mode = 'wb'), encoding = 'utf-8'))
-		self._logHandler.setFormatter(formatter)
-		rootLogger.addHandler(self._logHandler)
-		self._logHandler.setLevel(logging.INFO)
 
 	def _ensure_opened(self):
 		'''Open the next file that doesn't exist yet if there is currently no file opened'''
@@ -186,15 +174,17 @@ class WARC:
 	def _write_log_record(self):
 		assert self._metaWarcinfoRecordID is not None, 'write_warcinfo_record must be called first'
 
-		self._logHandler.flush()
-		self._logHandler.stream.close()
-		record = self._warcWriter.create_warc_record(
-		    f'file://{self._logFilename}',
-		    'resource',
-		    payload = gzip.GzipFile(self._logFile.name),
-		    warc_headers_dict = {'X-QWARC-Type': 'log', 'Content-Type': 'text/plain; charset=utf-8', 'WARC-Warcinfo-ID': self._metaWarcinfoRecordID},
-		  )
-		self._warcWriter.write_record(record)
+		rootLogger = logging.getLogger()
+		for handler in rootLogger.handlers: #FIXME: Uses undocumented attribute handlers
+			handler.flush()
+		with open(self._logFilename, 'rb') as fp:
+			record = self._warcWriter.create_warc_record(
+			    f'file://{self._logFilename}',
+			    'resource',
+			    payload = fp,
+			    warc_headers_dict = {'X-QWARC-Type': 'log', 'Content-Type': 'text/plain; charset=utf-8', 'WARC-Warcinfo-ID': self._metaWarcinfoRecordID},
+			  )
+			self._warcWriter.write_record(record)
 
 	def _close_file(self):
 		'''Close the currently opened WARC'''
@@ -222,12 +212,4 @@ class WARC:
 	def close(self):
 		'''Clean up everything.'''
 		self._close_file()
-		logging.getLogger().removeHandler(self._logHandler)
 		self._write_meta_warc(self._write_log_record)
-		try:
-			os.remove(self._logFile.name)
-		except OSError:
-			logging.error('Could not remove temporary log file')
-		self._logFile = None
-		self._logHandler.close()
-		self._logHandler = None
