@@ -154,6 +154,8 @@ class WARC:
 					      'WARC-Warcinfo-ID': self._metaWarcinfoRecordID,
 					    }
 					  )
+					# Workaround for https://github.com/webrecorder/warcio/issues/94
+					responseRecord.rec_headers.replace_header('WARC-Profile', 'http://netpreserve.org/warc/1.1/revisit/identical-payload-digest')
 				else:
 					self._dedupeMap[payloadDigest] = (responseRecord.rec_headers.get_header('WARC-Record-ID'), str(r.url), requestDate)
 			self._warcWriter.write_record(requestRecord)
