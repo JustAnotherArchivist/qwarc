@@ -153,9 +153,10 @@ async def handle_response_default(url, attempt, response, exc):
 		return ACTION_RETRY, True
 	if response.status in (401, 403, 404, 405, 410):
 		return ACTION_IGNORE, True
-	if exc is not None and isinstance(exc, (asyncio.TimeoutError, aiohttp.ClientError)):
-		await asyncio.sleep(5)
-		return ACTION_RETRY, True
+	if exc is not None:
+		if isinstance(exc, (asyncio.TimeoutError, aiohttp.ClientError)):
+			await asyncio.sleep(5)
+		return ACTION_RETRY, False # Don't write to WARC since there might be an incomplete response
 	if response.status in (200, 204, 206, 304):
 		return ACTION_SUCCESS, True
 	if response.status in (301, 302, 303, 307, 308):
