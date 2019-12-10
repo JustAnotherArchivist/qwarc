@@ -10,6 +10,7 @@ if _aiohttp.__version__ != '2.3.10':
 import asyncio
 import collections
 import concurrent.futures
+import io
 import itertools
 import logging
 import os
@@ -67,14 +68,19 @@ class Item:
 						self.logger.info(f'Fetching {url}')
 						response = await self.session.request(method, url, data = data, headers = headers, allow_redirects = False, verify_ssl = verify_ssl)
 						try:
-							ret = await response.read()
+							while True:
+								ret = await response.content.read(1048576)
+								if not ret:
+									break
 						except:
 							# No calling the handleResponse callback here because this is really bad. The not-so-bad exceptions (e.g. an error during reading the response) will be caught further down.
 							response.close()
 							raise
 						else:
-							tx = len(response.rawRequestData)
-							rx = len(response.rawResponseData)
+							response.rawRequestData.seek(0, io.SEEK_END)
+							tx = response.rawRequestData.tell()
+							response.rawResponseData.seek(0, io.SEEK_END)
+							rx = response.rawResponseData.tell()
 							self.logger.info(f'Fetched {url}: {response.status} (tx {tx}, rx {rx})')
 							self.stats['tx'] += tx
 							self.stats['rx'] += rx

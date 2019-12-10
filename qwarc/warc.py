@@ -100,10 +100,11 @@ class WARC:
 		for r in response.iter_all():
 			usec = f'{(r.rawRequestTimestamp - int(r.rawRequestTimestamp)):.6f}'[2:]
 			requestDate = time.strftime(f'%Y-%m-%dT%H:%M:%S.{usec}Z', time.gmtime(r.rawRequestTimestamp))
+			r.rawRequestData.seek(0)
 			requestRecord = self._warcWriter.create_warc_record(
 			    str(r.url),
 			    'request',
-			    payload = io.BytesIO(r.rawRequestData),
+			    payload = r.rawRequestData,
 			    warc_headers_dict = {
 			      'WARC-Date': requestDate,
 			      'WARC-IP-Address': r.remoteAddress[0],
@@ -111,10 +112,11 @@ class WARC:
 			    }
 			  )
 			requestRecordID = requestRecord.rec_headers.get_header('WARC-Record-ID')
+			r.rawResponseData.seek(0)
 			responseRecord = self._warcWriter.create_warc_record(
 			    str(r.url),
 			    'response',
-			    payload = io.BytesIO(r.rawResponseData),
+			    payload = r.rawResponseData,
 			    warc_headers_dict = {
 			      'WARC-Date': requestDate,
 			      'WARC-IP-Address': r.remoteAddress[0],

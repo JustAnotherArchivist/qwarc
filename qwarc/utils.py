@@ -243,3 +243,19 @@ class SpecDependencies(typing.NamedTuple):
 	packages: tuple = ()
 	files: tuple = ()
 	extra: typing.Any = None
+
+
+class ReadonlyFileView:
+	'''
+	A poor read-only view for a file object. It hides the writing methods and passes everything else through to the underlying file object. Note that this does *not* actually prevent modification at all.
+	'''
+
+	def __init__(self, fp):
+		self._fp = fp
+
+	def __getattr__(self, key):
+		if key in ('write', 'writelines', 'truncate'):
+			raise AttributeError
+		if key == 'writable':
+			return False
+		return getattr(self._fp, key)
