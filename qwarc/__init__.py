@@ -94,12 +94,13 @@ class Item:
 				if response and exc is None and writeToWarc:
 					self.warc.write_client_response(response)
 				history.append((response, exc))
+				retResponse = response if exc is None else None
 				if action in (ACTION_SUCCESS, ACTION_IGNORE):
-					return response, tuple(history)
+					return retResponse, tuple(history)
 				elif action == ACTION_FOLLOW_OR_SUCCESS:
 					redirectUrl = response.headers.get('Location') or response.headers.get('URI')
 					if not redirectUrl:
-						return response, tuple(history)
+						return retResponse, tuple(history)
 					url = url.join(yarl.URL(redirectUrl))
 					if response.status in (301, 302, 303) and method == 'POST':
 						method = 'GET'
@@ -107,7 +108,7 @@ class Item:
 					attempt = 0
 				elif action == ACTION_RETRIES_EXCEEDED:
 					self.logger.error(f'Request for {url} failed {attempt} times')
-					return response, tuple(history)
+					return retResponse, tuple(history)
 				elif action == ACTION_RETRY:
 					# Nothing to do, just go to the next cycle
 					pass
