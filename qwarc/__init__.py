@@ -91,6 +91,8 @@ class Item:
 					exc = e # Pass the exception outward for the history
 				else:
 					action, writeToWarc = await responseHandler(url, attempt, response, None)
+				if response and exc is None and writeToWarc:
+					self.warc.write_client_response(response)
 				history.append((response, exc))
 				if action in (ACTION_SUCCESS, ACTION_IGNORE):
 					return response, tuple(history)
@@ -111,8 +113,6 @@ class Item:
 					pass
 			finally:
 				if response:
-					if writeToWarc:
-						self.warc.write_client_response(response)
 					await response.release()
 
 	async def process(self):

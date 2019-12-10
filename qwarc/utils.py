@@ -144,6 +144,7 @@ async def handle_response_default(url, attempt, response, exc):
 	Parameters: url (yarl.URL instance), attempt (int), response (aiohttp.ClientResponse or None), exc (Exception or None)
 		At least one of response and exc is not None.
 	Returns: (one of the qwarc.RESPONSE_* constants, bool signifying whether to write to WARC or not)
+		The latter is ignored when exc is not None; responses that triggered an exception are never written to WARC.
 	'''
 
 	#TODO: Document that `attempt` is reset on redirects
