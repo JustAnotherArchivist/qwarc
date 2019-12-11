@@ -116,7 +116,7 @@ class ClientResponse(aiohttp.client_reqrep.ClientResponse):
 	def iter_all(self):
 		return itertools.chain(self.history, (self,))
 
-	async def _read(self):
+	async def _read(self, nbytes = None):
 		#FIXME: This uses internal undocumented APIs of aiohttp
 		payload = Payload()
 		self._rawData.responseData.seek(0)
@@ -135,6 +135,10 @@ class ClientResponse(aiohttp.client_reqrep.ClientResponse):
 			if not chunk:
 				break
 			eof, data = parser.feed_data(chunk)
+			if nbytes is not None and payload.data.tell() >= nbytes:
+				if payload.exc:
+					raise Exception from payload.exc
+				return payload.data.getvalue()[:nbytes]
 			# data can only not be None if eof is True, so there is no need to actually do anything about it
 			if eof:
 				break
@@ -145,8 +149,16 @@ class ClientResponse(aiohttp.client_reqrep.ClientResponse):
 			raise Exception from payload.exc
 		return payload.data.getvalue()
 
-	async def read(self):
+	async def read(self, nbytes = None):
+		'''
+		Read up to nbytes from the response payload, or the entire response if nbytes is None.
+		Note that this method always starts from the beginning of the response even if called repeatedly.
+		'''
 		#FIXME: Uses internal aiohttp attribute _content
+		if nbytes is not None:
+			if self._content is not None:
+				return self._content[:nbytes]
+			return (await self._read(nbytes))
 		if self._content is None:
 			self._content = await self._read()
 		return self._content
