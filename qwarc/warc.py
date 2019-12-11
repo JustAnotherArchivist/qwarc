@@ -132,7 +132,7 @@ class WARC:
 			  )
 			payloadDigest = responseRecord.rec_headers.get_header('WARC-Payload-Digest')
 			assert payloadDigest is not None
-			if self._dedupe and responseRecord.payload_length > 0: # Don't "deduplicate" empty responses
+			if self._dedupe and responseRecord.payload_length > 100: # Don't deduplicate small responses; the additional headers are typically larger than the payload dedupe savings...
 				if payloadDigest in self._dedupeMap:
 					refersToRecordId, refersToUri, refersToDate = self._dedupeMap[payloadDigest]
 					responseHttpHeaders = responseRecord.http_headers
