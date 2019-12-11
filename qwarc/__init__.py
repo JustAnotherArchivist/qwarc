@@ -220,7 +220,7 @@ class QWARC:
 			except concurrent.futures.CancelledError as e:
 				# Got cancelled, nothing we can do about it, but let's log a warning if it's a process task
 				if isinstance(future, asyncio.Task):
-					if future.taskType == 'process_item':
+					if future.taskType == 'process':
 						logging.warning(f'Task for {future.itemType}:{future.itemValue} cancelled: {future!r}')
 					elif future.taskType == 'sleep':
 						self._sleepTasks.remove(future)
