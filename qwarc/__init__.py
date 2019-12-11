@@ -86,7 +86,7 @@ class Item:
 							self.stats['rx'] += rx
 							self.stats['requests'] += 1
 				except (asyncio.TimeoutError, _aiohttp.ClientError) as e:
-					self.logger.error(f'Request for {url} failed: {e!r}')
+					self.logger.warning(f'Request for {url} failed: {e!r}')
 					action, writeToWarc = await responseHandler(url, attempt, response, e)
 					exc = e # Pass the exception outward for the history
 				else:
@@ -225,7 +225,7 @@ class QWARC:
 			except concurrent.futures.CancelledError as e:
 				# Got cancelled, nothing we can do about it, but let's log a warning if it's a process task
 				if future.taskType == 'process':
-					logging.warning(f'Task for {future.itemType}:{future.itemValue} cancelled: {future!r}')
+					logging.error(f'Task for {future.itemType}:{future.itemValue} cancelled: {future!r}')
 					newStatus = STATUS_ERROR
 			except Exception as e:
 				if future.taskType == 'process':
