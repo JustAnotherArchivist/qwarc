@@ -147,6 +147,8 @@ class ClientResponse(aiohttp.client_reqrep.ClientResponse):
 
 		if payload.exc:
 			raise Exception from payload.exc
+		if nbytes is not None:
+			return payload.data.getvalue()[:nbytes]
 		return payload.data.getvalue()
 
 	async def read(self, nbytes = None):
