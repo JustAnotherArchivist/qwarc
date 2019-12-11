@@ -100,11 +100,14 @@ class WARC:
 		for r in response.iter_all():
 			usec = f'{(r.rawRequestTimestamp - int(r.rawRequestTimestamp)):.6f}'[2:]
 			requestDate = time.strftime(f'%Y-%m-%dT%H:%M:%S.{usec}Z', time.gmtime(r.rawRequestTimestamp))
+			r.rawRequestData.seek(0, io.SEEK_END)
+			length = r.rawRequestData.tell()
 			r.rawRequestData.seek(0)
 			requestRecord = self._warcWriter.create_warc_record(
 			    str(r.url),
 			    'request',
 			    payload = r.rawRequestData,
+			    length = length,
 			    warc_headers_dict = {
 			      'WARC-Date': requestDate,
 			      'WARC-IP-Address': r.remoteAddress[0],
@@ -112,11 +115,14 @@ class WARC:
 			    }
 			  )
 			requestRecordID = requestRecord.rec_headers.get_header('WARC-Record-ID')
+			r.rawResponseData.seek(0, io.SEEK_END)
+			length = r.rawResponseData.tell()
 			r.rawResponseData.seek(0)
 			responseRecord = self._warcWriter.create_warc_record(
 			    str(r.url),
 			    'response',
 			    payload = r.rawResponseData,
+			    length = length,
 			    warc_headers_dict = {
 			      'WARC-Date': requestDate,
 			      'WARC-IP-Address': r.remoteAddress[0],
@@ -161,10 +167,14 @@ class WARC:
 
 		for type_, contentType, fn in itertools.chain((('specfile', 'application/x-python', self._specFile),), map(lambda x: ('spec-dependency-file', 'application/octet-stream', x), self._specDependencies.files)):
 			with open(fn, 'rb') as f:
+				f.seek(0, io.SEEK_END)
+				length = f.tell()
+				f.seek(0)
 				record = self._warcWriter.create_warc_record(
 				    f'file://{fn}',
 				    'resource',
 				    payload = f,
+				    length = length,
 				    warc_headers_dict = {'X-QWARC-Type': type_, 'WARC-Warcinfo-ID': self._metaWarcinfoRecordID, 'Content-Type': contentType},
 				  )
 				self._warcWriter.write_record(record)
@@ -180,10 +190,14 @@ class WARC:
 		for handler in rootLogger.handlers: #FIXME: Uses undocumented attribute handlers
 			handler.flush()
 		with open(self._logFilename, 'rb') as fp:
+			fp.seek(0, io.SEEK_END)
+			length = fp.tell()
+			fp.seek(0)
 			record = self._warcWriter.create_warc_record(
 			    f'file://{self._logFilename}',
 			    'resource',
 			    payload = fp,
+			    length = length,
 			    warc_headers_dict = {'X-QWARC-Type': 'log', 'Content-Type': 'text/plain; charset=utf-8', 'WARC-Warcinfo-ID': self._metaWarcinfoRecordID},
 			  )
 			self._warcWriter.write_record(record)
