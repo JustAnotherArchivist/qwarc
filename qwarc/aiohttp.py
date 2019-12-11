@@ -133,10 +133,11 @@ class ClientResponse(aiohttp.client_reqrep.ClientResponse):
 		while True:
 			chunk = self._rawData.responseData.read(1048576)
 			if not chunk:
-				if data:
-					parser.feed_data(data)
 				break
 			eof, data = parser.feed_data(chunk)
+			# data can only not be None if eof is True, so there is no need to actually do anything about it
+			if eof:
+				break
 		if not eof:
 			parser.feed_eof()
 
