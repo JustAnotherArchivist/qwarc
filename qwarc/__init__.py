@@ -287,6 +287,13 @@ class QWARC:
 				while len(self._tasks) >= self._concurrency:
 					await self._wait_for_free_task()
 
+				if os.path.exists('STOP'):
+					logging.info('Gracefully shutting down due to STOP file')
+					break
+				if self._memoryLimit and qwarc.utils.uses_too_much_memory(self._memoryLimit):
+					logging.info(f'Gracefully shutting down due to memory usage (current = {qwarc.utils.get_rss()} > limit = {self._memoryLimit})')
+					break
+
 				if self._minFreeDisk and qwarc.utils.too_little_disk_space(self._minFreeDisk):
 					logging.info('Disk space is low, sleeping')
 					sleepTask = asyncio.ensure_future(asyncio.sleep(random.uniform(self._concurrency / 2, self._concurrency * 1.5)))
@@ -294,13 +301,6 @@ class QWARC:
 					self._tasks.add(sleepTask)
 					self._sleepTasks.add(sleepTask)
 					continue
-
-				if os.path.exists('STOP'):
-					logging.info('Gracefully shutting down due to STOP file')
-					break
-				if self._memoryLimit and qwarc.utils.uses_too_much_memory(self._memoryLimit):
-					logging.info(f'Gracefully shutting down due to memory usage (current = {qwarc.utils.get_rss()} > limit = {self._memoryLimit})')
-					break
 
 				cursor = await self.obtain_exclusive_db_lock()
 				try:
