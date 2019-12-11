@@ -7,7 +7,8 @@ STATUS_INPROGRESS = 1
 STATUS_DONE = 2
 '''Status of an item that has been processed'''
 
-#TODO: Add a STATUS_ERROR?
+STATUS_ERROR = 3
+'''Status of an item during whose processing an error occurred'''
 
 ACTION_SUCCESS = 0
 '''Treat this response as a success'''
