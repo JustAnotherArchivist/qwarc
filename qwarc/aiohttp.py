@@ -126,7 +126,7 @@ class ClientResponse(aiohttp.client_reqrep.ClientResponse):
 		respMsg = aiohttp.http_parser.HttpResponseParserPy().parse_message(beginning[:pos + 2].split(b'\r\n'))
 		try:
 			length = int(self.headers.get('Content-Length'))
-		except (KeyError, ValueError):
+		except (KeyError, ValueError, TypeError):
 			length = None
 		parser = aiohttp.http_parser.HttpPayloadParser(payload, length = length, chunked = respMsg.chunked, compression = respMsg.compression, code = respMsg.code, method = self.method)
 		eof, data = parser.feed_data(beginning[pos + 4:])
