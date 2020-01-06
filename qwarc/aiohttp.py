@@ -45,8 +45,6 @@ class ResponseHandler(aiohttp.client_proto.ResponseHandler):
 		self.rawData.responseData.write(data)
 
 	def reset_raw_data(self):
-		if self.rawData:
-			self.rawData.close()
 		self.rawData = RawData()
 
 
@@ -169,6 +167,11 @@ class ClientResponse(aiohttp.client_reqrep.ClientResponse):
 		if not self.closed:
 			self.connection.reset_raw_data()
 		await super().release()
+
+	def __del__(self):
+		if self._rawData:
+			self._rawData.close()
+		super().__del__()
 
 
 class Payload:
