@@ -229,7 +229,7 @@ class QWARC:
 					newStatus = STATUS_ERROR
 			except Exception as e:
 				if future.taskType == 'process':
-					logging.error(f'{future.itemType}:{future.itemValue} failed: {e!r} ({item.stats["requests"]} requests, {item.stats["tx"]} tx, {item.stats["rx"]} rx)')
+					logging.error(f'{future.itemType}:{future.itemValue} failed: {e!r} ({item.stats["requests"]} requests, {item.stats["tx"]} tx, {item.stats["rx"]} rx)', exc_info = e)
 					newStatus = STATUS_ERROR
 			else:
 				if future.taskType == 'process':
