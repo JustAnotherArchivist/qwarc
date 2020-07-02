@@ -128,14 +128,20 @@ class ClientResponse(aiohttp.client_reqrep.ClientResponse):
 			length = None
 		parser = aiohttp.http_parser.HttpPayloadParser(payload, length = length, chunked = respMsg.chunked, compression = respMsg.compression, code = respMsg.code, method = self.method)
 		while beginning.endswith(b'0\r\n') or beginning.endswith(b'0\r\n\r'): # https://github.com/aio-libs/aiohttp/issues/4630
-			beginning = beginning + self._rawData.responseData.read(4)
+			chunk4630 = self._rawData.responseData.read(1024)
+			if not chunk4630:
+				break
+			beginning = beginning + chunk4630
 		eof, data = parser.feed_data(beginning[pos + 4:])
 		while True:
 			chunk = self._rawData.responseData.read(1048576)
 			if not chunk:
 				break
 			while chunk.endswith(b'0\r\n') or chunk.endswith(b'0\r\n\r'): # https://github.com/aio-libs/aiohttp/issues/4630
-				chunk = chunk + self._rawData.responseData.read(4)
+				chunk4630 = self._rawData.responseData.read(1024)
+				if not chunk4630:
+					break
+				chunk = chunk + chunk4630
 			eof, data = parser.feed_data(chunk)
 			if nbytes is not None and payload.data.tell() >= nbytes:
 				if payload.exc:
