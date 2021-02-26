@@ -15,7 +15,7 @@ setuptools.setup(
 	packages = ['qwarc'],
 	setup_requires = ['setuptools_scm'],
 	use_scm_version = True,
-	install_requires = ['aiohttp==2.3.10', 'warcio', 'yarl'],
+	install_requires = ['aiohttp==3.7.4', 'warcio', 'yarl'],
 	entry_points = {
 		'console_scripts': [
 			'qwarc = qwarc.cli:main',
