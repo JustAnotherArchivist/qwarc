@@ -265,7 +265,7 @@ class QWARC:
 	async def run(self, loop):
 #		headers = [('User-Agent', 'Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0')] TODO: Move elsewhere
 #		with open ('data/user-agents', 'r') as f:
-		headers = '[(' + random.choice(pkgutil.get_data(__name__, "data/user-agents")).strip() + ')]'
+		headers = '[(' + random.choice(str(pkgutil.get_data(__name__, "data/user-agents"))).strip() + ')]'
 
 		for i in range(self._concurrency):
 			session = _aiohttp.ClientSession(
