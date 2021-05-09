@@ -150,7 +150,8 @@ class Item:
 
 
 class QWARC:
-	def __init__(self, itemClasses, warcBasePath, dbPath, command, specFile, specDependencies, logFilename, concurrency = 1, memoryLimit = 0, minFreeDisk = 0, warcSizeLimit = 0, warcDedupe = False):
+	def __init__(self, itemClasses, warcBasePath, dbPath, command, specFile, specDependencies, logFilename, userAgent,
+				 memoryLimit=0, minFreeDisk=0, warcSizeLimit=0, warcDedupe=False, concurrency=1):
 		'''
 		itemClasses: iterable of Item
 		warcBasePath: str, base name of the WARC files
@@ -165,6 +166,7 @@ class QWARC:
 		warcSizeLimit: int, size of each WARC file; 0 if the WARCs should not be split
 		'''
 
+		self.userAgent = userAgent
 		self._itemClasses = itemClasses
 		self._itemTypeMap = {cls.itemType: cls for cls in itemClasses}
 		self._warcBasePath = warcBasePath
@@ -263,7 +265,11 @@ class QWARC:
 			raise
 
 	async def run(self, loop):
-		headers = [('User-Agent', 'Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0')] #TODO: Move elsewhere
+
+#		headers = [('User-Agent', 'Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0')] TODO: Move elsewhere
+		with open (self.userAgent, 'r') as f:
+			headers = '[(' + random.choice(list(f)).strip() + ')]'
+			print(headers)
 
 		for i in range(self._concurrency):
 			session = _aiohttp.ClientSession(

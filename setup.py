@@ -13,6 +13,7 @@ setuptools.setup(
 		'Programming Language :: Python :: 3.7',
 	],
 	packages = ['qwarc'],
+	include_package_data = True,
 	setup_requires = ['setuptools_scm'],
 	use_scm_version = True,
 	install_requires = ['aiohttp==2.3.10', 'warcio', 'yarl'],
